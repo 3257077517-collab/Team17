@@ -1,4 +1,5 @@
-\documentclass[12pt, a4paper]{article}
+\documentclass[12pt]{article}
+\usepackage[a4paper, margin=25mm]{geometry}
 \usepackage{amsmath}
 \usepackage{amsfonts}
 \usepackage{mismath}
@@ -12,7 +13,6 @@ Note the following equation for a matrix variable $M$ and constant matrix $B$ of
 \begin{equation*}
 	\nabla_M\left(\tr(M B M^T)\right) = M(B^T + B).
 \end{equation*}
-
 In particular, for $B=I$, we find the gradient of the square of the Frobenius norm:
 \begin{equation*}
 	\nabla_M\left(\tr(M M^T)\right) = \nabla_M\left(\sum_{i,j} m_{ij}^2\right) = \nabla_M\left(\Vert M\Vert_F^2\right) = 2M.
@@ -22,33 +22,30 @@ Now let $X(t) \in \mathbb{R}^{m \times n}$ and define
 \begin{equation*}
 	\Phi(X) = \frac{1}{4} \Vert M(X) \Vert^2_F, \quad M(X) = X^T X - I.
 \end{equation*}
-
 By the matrix gradient chain rule, with a slight abuse of notation for the reparameterization of $\Phi$,
-
 \begin{equation*}
 	\nabla_X\Phi(X) = \frac{1}{4} \nabla_X M^T(X) \nabla_{M(X)} \Phi\left(M(X)\right) = X (X^T X - I).
 \end{equation*}
-
 Setting up an equation of gradient descent on potential $\Phi$ gives
-
 \begin{equation*}
     \frac{dX}{dt} = -\nabla\Phi(X) = X(I - X^T X).
 \end{equation*}
 
 Note that we may produce an SVD factorization of $X = U \Sigma V^T.$ Afterwards,
-
 \begin{align*}
     \frac{d}{dt}\left[U \Sigma V^T\right]
         &= U \Sigma V^T (I - V \Sigma^T U^T U \Sigma V^T) \\
         &= U \left( \Sigma \left( I - \Sigma^2 \right) \right) V^T.
 \end{align*}
-
 From this, it is clear that orthogonal factors $U, V$ stay fixed during evolution of $X(t)$, so the equation may be simplified to consider the evolution of the singular values:
-
 \begin{equation*}
     \frac{d\sigma_i}{dt} = \sigma_i(1 - \sigma_i^2).
 \end{equation*}
-
 This ODE attains stable equilibrium points at $\sigma_i = \pm1$ and has an unstable equilibrium point at $\sigma_i = 0$. Therefore, any positive $\sigma_i$ will approach $1$ as $t\rightarrow\infty$, and the effect of the matrix differential equation is to take the input matrix to its polar factor $U V^T$.
 
+Now consider that $\Phi$ is smooth and positive-definite on the matrix space, and see:
+\begin{equation*}
+    \frac{d}{dt} \Phi\left(X(t)\right) = \left(\nabla\Phi(X)\right)^T \frac{dX}{dt} = -\Vert\nabla\Phi(X)\Vert_F^2 \le 0.
+\end{equation*}
+Therefore $\Phi$ is Lyapunov on the problem space, and all zero solutions of the matrix ODE are stable. Note this does not contradict the singular value analysis as nonzero rank-deficient matrices are not zero solutions.
 \end{document}
