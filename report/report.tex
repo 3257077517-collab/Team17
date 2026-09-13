@@ -32,13 +32,13 @@ By the matrix gradient chain rule, with a slight abuse of notation for the repar
 Setting up an equation of gradient descent on potential $\Phi$ gives
 
 \begin{equation*}
-    {dX \over dt} = -\nabla\Phi(X) = X(I - X^T X).
+    \frac{dX}{dt} = -\nabla\Phi(X) = X(I - X^T X).
 \end{equation*}
 
 Note that we may produce an SVD factorization of $X = U \Sigma V^T.$ Afterwards,
 
 \begin{align*}
-    {d \over dt}\left[U \Sigma V^T\right]
+    \frac{d}{dt}\left[U \Sigma V^T\right]
         &= U \Sigma V^T (I - V \Sigma^T U^T U \Sigma V^T) \\
         &= U \left( \Sigma \left( I - \Sigma^2 \right) \right) V^T.
 \end{align*}
@@ -46,7 +46,7 @@ Note that we may produce an SVD factorization of $X = U \Sigma V^T.$ Afterwards,
 From this, it is clear that orthogonal factors $U, V$ stay fixed during evolution of $X(t)$, so the equation may be simplified to consider the evolution of the singular values:
 
 \begin{equation*}
-    {d\sigma_i \over dt} = \sigma_i(1 - \sigma_i^2).
+    \frac{d\sigma_i}{dt} = \sigma_i(1 - \sigma_i^2).
 \end{equation*}
 
 This ODE attains stable equilibrium points at $\sigma_i = \pm1$ and has an unstable equilibrium point at $\sigma_i = 0$. Therefore, any positive $\sigma_i$ will approach $1$ as $t\rightarrow\infty$, and the effect of the matrix differential equation is to take the input matrix to its polar factor $U V^T$.
