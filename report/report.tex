@@ -48,4 +48,33 @@ Now consider that $\Phi$ is smooth and positive-definite on the matrix space, an
     \frac{d}{dt} \Phi\left(X(t)\right) = \left(\nabla\Phi(X)\right)^T \frac{dX}{dt} = -\Vert\nabla\Phi(X)\Vert_F^2 \le 0.
 \end{equation*}
 Therefore $\Phi$ is Lyapunov on the problem space, and all zero solutions of the matrix ODE are stable. Note this does not contradict the singular value analysis as nonzero rank-deficient matrices are not zero solutions.
+
+For the stability analysis, the gradient of the matrix equation RHS $-\nabla^2 \Phi$ is a quartix with the following components, using Einstein summation convention with index notation derivatives modified for matrices, i.e. $(\nabla f)_{ij} := \partial f/\partial X_{ij} := f_{,ij}$:
+\begin{align*}
+    -{(\nabla^2 \Phi)}_{abcd} &= -\Phi_{,ab,cd} = -\frac{1}{4} (M_{ij} M_{ij})_{,ab,cd} = -\frac{1}{2} (M_{ij} M_{ij,ab})_{,cd} \\
+        &= -\frac{1}{2} (M_{ij,ab} M_{ij,cd} + M_{ij} M_{ij,ab,cd}).
+\end{align*}
+Now evaluate matrix derivatives of $M$:
+\begin{align*}
+    M_{ij,ab} &= (X^T X - I)_{ij,ab} = (X_{ki} X_{kj} - \delta_{ij})_{,ab} \\
+        &= X_{ki,ab} X_{kj} + X_{ki} X_{kj,ab} = \delta_{ka} \delta_{ib} X_{kj} + X_{ki} \delta_{ka} \delta_{jb} \\
+        &= \delta_{ib} X_{aj} + X_{ai} \delta_{jb}; \\
+    M_{ij,ab,cd} &= \delta_{ib} X_{aj,cd} + X_{ai,cd} \delta_{jb} = \delta_{ib} \delta_{ac} \delta_{jd} +  \delta_{ac} \delta_{id} \delta_{jb} \\
+        &= \delta_{ac} (\delta_{ib} \delta_{jd} + \delta_{id} \delta_{jb}).
+\end{align*}
+On the way, we may verify that the RHS expression derived earlier is correct:
+\begin{align*}
+    -{(\nabla \Phi)}_{ab} &= -\Phi_{,ab} = -\frac{1}{2} M_{ij} M_{ij,ab} = -\frac{1}{2} (X_{ki} X_{kj} - \delta_{ij})(\delta_{ib} X_{aj} + X_{ai} \delta_{jb}) \\
+        &= \frac{1}{2} (\delta_{ij} \delta_{ib} X_{aj} - X_{ki} X_{kj} \delta_{ib} X_{aj} + \delta_{ij} X_{ai} \delta_{jb} - X_{ki} X_{kj} X_{ai} \delta_{jb}) \\
+        &= X_{ab} - X_{aj} X_{kj} X_{kb} = X_{aj} (\delta_{jb} - X_{kj} X_{kb}) \\
+        &= (X(I - X^T X))_{ab}.
+\end{align*}
+Therefore our matrix-valued matrix function Jacobian tensor may be unambiguously expressed using index notation:
+\begin{align*}
+    -{(\nabla^2 \Phi)}_{abcd} &= -\frac{1}{2} (M_{ij,ab} M_{ij,cd} + M_{ij} M_{ij,ab,cd}) \\
+        &= -\frac{1}{2} ((\delta_{ib} X_{aj} + X_{ai} \delta_{jb}) (\delta_{id} X_{cj} + X_{ci} \delta_{jd}) + (X_{ki} X_{kj} - \delta_{ij}) \delta_{ac} (\delta_{ib} \delta_{jd} + \delta_{id} \delta_{jb})) \\
+        &= -(X_{aj} \delta_{bd} X_{cj} + X_{ad} X_{cb}) + (\delta_{bd} - X_{kb} X_{kd}) \delta_{ac} \\
+        &= \delta_{ac} \delta_{bd} -\delta_{bd} X_{aj} X_{cj} - \delta_{ac} X_{kb} X_{kd} - X_{ad} X_{cb}.
+\end{align*}
+We may vectorize $ab$ and $cd$ index pairs in order to conduct the usual eigenvector analysis.
 \end{document}
