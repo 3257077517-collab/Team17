@@ -31,7 +31,7 @@ Setting up an equation of gradient descent on potential $\Phi$ gives
     \frac{dX}{dt} = -\nabla\Phi(X) = X(I - X^T X).
 \end{equation*}
 
-Note that we may produce an SVD factorization of $X = U \Sigma V^T.$ Afterwards,
+We may produce an SVD factorization of $X = U \Sigma V^T.$ Afterwards,
 \begin{align*}
     \frac{d}{dt}\left[U \Sigma V^T\right]
         &= U \Sigma V^T (I - V \Sigma^T U^T U \Sigma V^T) \\
@@ -43,7 +43,7 @@ From this, it is clear that orthogonal factors $U, V$ stay fixed during evolutio
 \end{equation*}
 This ODE attains stable equilibrium points at $\sigma_i = \pm1$ and has an unstable equilibrium point at $\sigma_i = 0$. Therefore, any positive $\sigma_i$ will approach $1$ as $t\rightarrow\infty$, and the effect of the matrix differential equation is to take the input matrix to its polar factor $U V^T$.
 
-One may wonder if $\Phi$ is a Lyapunov function for this system, but in fact, it is at most positive *semi*-definite on equilibrium points in the orthogonal group, as every neighborhood of a solution will also contain zeroes of $\Phi.$
+One may wonder if $\Phi$ is a Lyapunov function for this system, but in fact, it is only positive \emph{semi}-definite on equilibrium points in the orthogonal group, as every neighborhood of a solution will also contain zeroes of $\Phi.$
 
 For the stability analysis, the gradient of the matrix equation RHS $-\nabla^2 \Phi$ is a quartix with the following components, using Einstein summation convention with index notation derivatives modified for matrices, i.e. $(\nabla f)_{ij} := \partial f/\partial X_{ij} := f_{,ij}$:
 \begin{align*}
@@ -72,5 +72,20 @@ Therefore our matrix-valued matrix function Jacobian tensor may be unambiguously
         &= -(X_{aj} \delta_{bd} X_{cj} + X_{ad} X_{cb}) + (\delta_{bd} - X_{kb} X_{kd}) \delta_{ac} \\
         &= \delta_{ac} \delta_{bd} -\delta_{bd} X_{aj} X_{cj} - \delta_{ac} X_{kb} X_{kd} - X_{ad} X_{cb}.
 \end{align*}
-We may vectorize $ab$ and $cd$ index pairs in order to conduct the usual eigenvector analysis.
+We may vectorize $ab$ and $cd$ index pairs in order to conduct the usual eigenvector analysis, but it is possible to directly obtain the eigenpairs for the matrix derivative at points $X \in \mathbb{R}^{n \times m}$ which satisfy either $X^T X = I_m$ or $X X^T = I_n.$ Suppose we are at such a point where without loss of generality, $n < m$ and $X X^T = I_n,$ and assume we have eigenmatrix $A$ with eigenvalue $\lambda:$
+\begin{align*}
+    -{(\nabla^2 \Phi)}_{abcd}A_{cd} &= A_{ab} - A_{cb} X_{aj} X_{cj} - A_{ad} X_{kb} X_{kd} - A_{cd} X_{ad} X_{cb} \\
+        &= \left(A - X X^T A - A X^T X - X A^T X\right)_{ab} \\
+        &= -\left((A X^T + X A^T) X\right)_{ab} = \lambda A_{ab}.
+\end{align*}
+Then it is necessary that
+\begin{align*}
+    &-(A X^T + X A^T) X X^T = -(A X^T + X A^T) = \lambda A X^T \\
+    \Longleftrightarrow &-X A^T = (1 + \lambda) A X^T.
+\end{align*}
+First, if $\lambda = -2,$ then we have $X A^T = A X^T$ is symmetric. This eigenspace has dimension $n(n+1)/2$. An orthonormal basis for this space can be found by first enumerating the rows of $X = (x_1, \ldots, x_n)^T,$ which forms an orthonormal basis of the rowspace of $X$ as $X X^T = I.$ Now if $e_1, \ldots, e_n$ are the standard basis vectors, then it can be verified that the eigenmatrices with eigenvalue $\lambda = -2$ are spanned by the following orthonormal eigenmatrices:
+\begin{equation*}
+    \left\{ e_i x_i^T : i \in \{ 1, \ldots, n \} \right\} \cup \left\{ (e_j x_k^T + e_k x_j^T) / \sqrt{2} : j, k \in \{ 1, \ldots, n \}, j < k \right\}.
+\end{equation*}
+In particular, you may see that $X = \sum_{i = 1}^n e_i x_i^T$ is a part of this subspace. The first set in the above expression targets the positions on the diagonal, and the second set covers the off-diagonal entries of $X A^T \in \mathbb{R}^{n \times n}.$
 \end{document}
