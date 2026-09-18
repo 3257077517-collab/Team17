@@ -45,9 +45,9 @@ This ODE attains stable equilibrium points at $\sigma_i = \pm1$ and has an unsta
 
 Now consider that $\Phi$ is smooth and positive-definite on the matrix space, and see:
 \begin{equation*}
-    \frac{d}{dt} \Phi\left(X(t)\right) = \left(\nabla\Phi(X)\right)^T \frac{dX}{dt} = -\Vert\nabla\Phi(X)\Vert_F^2 \le 0.
+    \dot{\Phi}(X(t)) = \frac{d}{dt} \Phi\left(X(t)\right) = \left(\nabla\Phi(X)\right)^T \frac{dX}{dt} = -\Vert\nabla\Phi(X)\Vert_F^2 \le 0.
 \end{equation*}
-Therefore $\Phi$ is Lyapunov on the problem space, and all zero solutions of the matrix ODE are stable. Note this does not contradict the singular value analysis as nonzero rank-deficient matrices are not zero solutions.
+Observe $\dot{\Phi} \le 0$ is negative semi-definite, so therefore $\Phi$ is a Lyapunov function for this dynamical system, and all zero solutions of the matrix ODE are stable. Moreover, we have that $\dot{\Phi}(X) = 0$ exactly when the ODE RHS $-\nabla\Phi(X) = 0.$
 
 For the stability analysis, the gradient of the matrix equation RHS $-\nabla^2 \Phi$ is a quartix with the following components, using Einstein summation convention with index notation derivatives modified for matrices, i.e. $(\nabla f)_{ij} := \partial f/\partial X_{ij} := f_{,ij}$:
 \begin{align*}
