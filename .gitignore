@@ -8,3 +8,6 @@
 
 # virtual env
 .venv/
+
+# Jupyter Lab stuff
+.ipynb_checkpoints/
