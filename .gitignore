@@ -5,3 +5,9 @@
 *.log
 *.synctex.gz
 *.pdf
+
+# virtual env
+.venv/
+
+# Jupyter Lab stuff
+.ipynb_checkpoints/
