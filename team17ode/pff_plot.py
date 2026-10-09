@@ -14,8 +14,9 @@ def hack_off_autoscale(ax):
     ax.set_ylim(*ax.get_ylim())
 
 
-def plot_pff_sv_flow_lines(ax: plt.Axes, num_lines, t_resolution=129, **plot_kwargs):
-    t_left, t_right = ax.get_xlim()
+def plot_pff_sv_flow_lines(ax: plt.Axes, num_lines, t_resolution=129, t_left=None, t_right=None, **plot_kwargs):
+    if t_left is None or t_right is None:
+        t_left, t_right = ax.get_xlim()
 
     ts = np.linspace(t_left, t_right, t_resolution)
     t0s = np.linspace(t_left, t_right, num_lines + 2)[1:-1]
@@ -87,10 +88,9 @@ def make_sv_streamplot_fig() -> plt.Figure:
 
     ax_flow.set_xlabel("$t$")
     ax_flow.set_ylabel("$\\pm\\sigma_i$", labelpad=12, rotation=0)
-    ax_flow.set_xlim(0.0, 3.5)
     ax_flow.set_ylim(-2.0, 2.0)
     ax_flow.set_aspect("equal", adjustable="datalim")
-    plot_pff_sv_flow_lines(ax_flow, 16, linewidth=0.5, color="C1", zorder=-1)
+    plot_pff_sv_flow_lines(ax_flow, 16, t_left=0.0, t_right=3.5, linewidth=0.5, color="C1", zorder=-1)
 
     ax_flow.axhline(-1.0, linewidth=1.0, color="C0")
     ax_flow.axhline(0.0, linewidth=1.0, color="C0")
@@ -121,6 +121,7 @@ def make_sv_streamplot_fig() -> plt.Figure:
 
 def make_polygon_fig(ivp_spec, soln, **fig_kwargs) -> plt.Figure:
     fig: plt.Figure = plt.figure(**fig_kwargs)
+
     ax: plt.Axes = fig.add_subplot()
 
     ax.set_xlabel("$t$")
