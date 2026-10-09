@@ -1,4 +1,7 @@
 from collections import namedtuple
+import numpy as np
+import scipy.integrate as itg
+
 
 ErrorAnalysisResult = namedtuple(
     "ErrorAnalysisResult",
@@ -16,7 +19,7 @@ ErrorAnalysisResult = namedtuple(
 )
 
 
-def do_error_analysis(solver_kwargs_list, exact_sol_fn, norm_fn):
+def do_error_analysis(method, solver_kwargs_list, exact_sol_fn, norm_fn):
     num_times_to_solve = len(solver_kwargs_list)
     avg_step_sizes = np.empty(num_times_to_solve)
     global_errors = np.empty(num_times_to_solve)
@@ -26,7 +29,7 @@ def do_error_analysis(solver_kwargs_list, exact_sol_fn, norm_fn):
     solns = []
 
     for i, solver_kwargs in enumerate(solver_kwargs_list):
-        soln = itg.solve_ivp(**solver_kwargs)
+        soln = itg.solve_ivp(method=method, **solver_kwargs)
         if "atol" in solver_kwargs:
             # make first step informed
             step_size_seq = soln.t[1:] - soln.t[:-1]
@@ -34,7 +37,7 @@ def do_error_analysis(solver_kwargs_list, exact_sol_fn, norm_fn):
                 **solver_kwargs,
                 first_step=(soln.t[-1] - soln.t[0]) / (step_size_seq.shape[0])
             )
-            soln = itg.solve_ivp(**solver_kwargs)
+            soln = itg.solve_ivp(method=method, **solver_kwargs)
         t0 = soln.t[0]
         y0 = soln.y.T[0]
         tf = soln.t[-1]

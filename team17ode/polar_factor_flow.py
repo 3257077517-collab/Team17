@@ -1,5 +1,7 @@
 from collections import namedtuple
+from timeit import timeit
 import numpy as np
+from scipy import linalg as spla
 from .random import random_O
 
 
@@ -52,6 +54,7 @@ PFFIVPSpec = namedtuple(
     "PFFIVPSpec",
     [
         "U",
+        "Sigma0",
         "V",
         "sv0s",
         "X0",
@@ -86,6 +89,7 @@ def random_pff_ivp(rng: np.random.Generator, out_dim: int, in_dim: int) -> PFFIV
 
     return PFFIVPSpec(
         U=U,
+        Sigma0=Sigma0,
         V=V,
         sv0s=sv0s,
         X0=X0,
@@ -94,3 +98,34 @@ def random_pff_ivp(rng: np.random.Generator, out_dim: int, in_dim: int) -> PFFIV
         pff_exact_sol_fn=pff_exact_sol_fn,
         pff_norm_fn=pff_norm_fn,
     )
+
+
+def measure_neff_scales(
+    ivp_spec: PFFIVPSpec,
+    rng=np.random.default_rng(0xE1E100),
+    num_random_vecs=1000,
+    num_timeit_reps=100,
+):
+    random_vecs = rng.uniform(
+        -2.0, 2.0, size=num_random_vecs * ivp_spec.X0.shape[0] * ivp_spec.X0.shape[1]
+    ).reshape((num_random_vecs, -1))
+    fev_time = sum(
+        timeit(lambda: ivp_spec.pff_fun(0.0, vec), number=num_timeit_reps)
+        for vec in random_vecs
+    )
+    jev_scale = (
+        sum(
+            timeit(lambda: ivp_spec.pff_jac(0.0, vec), number=num_timeit_reps)
+            for vec in random_vecs
+        )
+        / fev_time
+    )
+    random_jacs = [ivp_spec.pff_jac(0.0, vec) for vec in random_vecs]
+    lu_scale = (
+        sum(
+            timeit(lambda: spla.lu_factor(jac), number=num_timeit_reps)
+            for jac in random_jacs
+        )
+        / fev_time
+    )
+    return jev_scale, lu_scale

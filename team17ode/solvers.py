@@ -1,3 +1,4 @@
+import numpy as np
 import scipy.integrate as itg
 from scipy.integrate._ivp.rk import RungeKutta, rk_step
 
