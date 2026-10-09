@@ -230,7 +230,7 @@ def make_error_analysis_fig(
         )
 
     hack_off_autoscale(ax_eigen)
-    plot_pff_sv_flow_lines(ax_eigen, 17, linewidth=0.125, zorder=-1)
+    plot_pff_sv_flow_lines(ax_eigen, 17, color='C6', linewidth=0.125, zorder=-1)
 
     twin_errsum_lin.violinplot(
         [np.log2(curve[:-1]) for curve in result.local_error_curves],

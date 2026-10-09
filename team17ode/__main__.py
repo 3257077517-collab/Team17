@@ -45,7 +45,7 @@ method_specs = [
     MethodSpec("Adams/BDF", itg.LSODA, order=5, adaptive=True, uses_jac=True),
 ]
 
-runs_per_method = 2
+runs_per_method = 6
 
 
 def get_kwargs_list(method_spec: MethodSpec) -> dict:
@@ -56,8 +56,9 @@ def get_kwargs_list(method_spec: MethodSpec) -> dict:
                 atol=np.exp2(-6 * i - 4),
             )
         else:
+            steps_div = np.max([method_spec.order - 1, 1])
             extra_kwargs = dict(
-                num_steps=(1 << (2 * i)) * 4,
+                num_steps=(1 << (2 * i)) * 4 // steps_div,
             )
 
         if method_spec.uses_jac:
@@ -135,6 +136,9 @@ make_error_analysis_fig(
     mpl.colormaps["spring"],
 )
 plt.savefig("figures/adapt_rk23_err.svg")
+
+make_error_analysis_fig(ivp_spec, radau_error_analysis_result, mpl.colormaps["cool"])
+plt.savefig("figures/radau_err.svg")
 
 make_work_precision_fig(error_analyses, jev_scale, lu_scale)
 plt.savefig("figures/work_precision.svg")
