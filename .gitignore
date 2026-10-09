@@ -14,3 +14,6 @@
 
 # python stuff
 __pycache__/
+
+# figure outputs
+figures/*.svg
