@@ -11,3 +11,6 @@
 
 # Jupyter Lab stuff
 .ipynb_checkpoints/
+
+# python stuff
+__pycache__/
