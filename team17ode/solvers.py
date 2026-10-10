@@ -3,7 +3,7 @@ import scipy.integrate as itg
 from scipy.integrate._ivp.rk import RungeKutta, rk_step
 
 
-class RK11(RungeKutta):
+class RK21(RungeKutta):
     order = 1
     error_estimator_order = 1
     n_stages = 1
@@ -81,7 +81,7 @@ class FixedRungeKutta(RungeKutta):
         return True, None
 
 
-class FixedRK1(FixedRungeKutta, RK11):
+class FixedRK1(FixedRungeKutta, RK21):
     pass
 
 
