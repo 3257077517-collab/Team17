@@ -14,7 +14,7 @@ class RK11(RungeKutta):
     P = np.array([[1.0, 1, -1], [0, -1, 1]])
 
 
-class NaiveRungeKutta(RungeKutta):
+class FixedRungeKutta(RungeKutta):
     def __init__(
         self,
         fun,
@@ -81,13 +81,17 @@ class NaiveRungeKutta(RungeKutta):
         return True, None
 
 
-class NaiveRK11(NaiveRungeKutta, RK11):
+class FixedRK1(FixedRungeKutta, RK11):
     pass
 
 
-class NaiveRK23(NaiveRungeKutta, itg.RK23):
+class FixedRK3(FixedRungeKutta, itg.RK23):
     pass
 
 
-class NaiveRK45(NaiveRungeKutta, itg.RK45):
+class FixedRK5(FixedRungeKutta, itg.RK45):
+    pass
+
+
+class FixedRK8(FixedRungeKutta, itg.DOP853):
     pass

@@ -286,7 +286,7 @@ def make_error_analysis_fig(
 
 
 def make_work_precision_fig(
-    error_analyses: dict, jev_scale: float, lu_scale: float, markerset="xxxoooo+++"
+    error_analyses: dict, jev_scale: float, lu_scale: float, markerset="xxxxoooo+++"
 ) -> plt.Figure:
     fig, ax = plt.subplots()
     ax.set_xlabel("$\\left\\Vert E_G \\right\\Vert$")

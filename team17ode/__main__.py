@@ -35,13 +35,14 @@ MethodSpec = namedtuple(
 )
 
 method_specs = [
-    MethodSpec("fs RK1", NaiveRK11, order=1, adaptive=False, uses_jac=False),
-    MethodSpec("fs RK3", NaiveRK23, order=3, adaptive=False, uses_jac=False),
-    MethodSpec("fs RK5", NaiveRK45, order=5, adaptive=False, uses_jac=False),
+    MethodSpec("fs RK1", FixedRK1, order=1, adaptive=False, uses_jac=False),
+    MethodSpec("fs RK3", FixedRK3, order=3, adaptive=False, uses_jac=False),
+    MethodSpec("fs RK5", FixedRK5, order=5, adaptive=False, uses_jac=False),
+    MethodSpec("fs RK8", FixedRK8, order=8, adaptive=False, uses_jac=False),
     MethodSpec("as RK1(1)", RK11, order=1, adaptive=True, uses_jac=False),
     MethodSpec("as RK3(2)", itg.RK23, order=3, adaptive=True, uses_jac=False),
     MethodSpec("as RK5(4)", itg.RK45, order=5, adaptive=True, uses_jac=False),
-    MethodSpec("DOP853", itg.DOP853, order=8, adaptive=True, uses_jac=False),
+    MethodSpec("as DOP853", itg.DOP853, order=8, adaptive=True, uses_jac=False),
     MethodSpec("Radau IIA", itg.Radau, order=5, adaptive=True, uses_jac=True),
     MethodSpec("BDF", itg.BDF, order=5, adaptive=True, uses_jac=True),
     MethodSpec("Adams/BDF", itg.LSODA, order=5, adaptive=True, uses_jac=True),
@@ -54,13 +55,14 @@ def get_kwargs_list(method_spec: MethodSpec) -> dict:
     def get_extra_kwargs(i):
         if method_spec.adaptive:
             extra_kwargs = dict(
-                rtol=np.exp2(-3 * i - 2),
-                atol=np.exp2(-6 * i - 4),
+                rtol=np.exp2(-4 * i - 2),
+                atol=np.exp2(-8 * i - 4),
             )
         else:
             steps_div = np.max([method_spec.order - 1, 1])
+            num_steps = int(np.exp2(2 * i / method_spec.order) * 4)
             extra_kwargs = dict(
-                num_steps=np.max([(1 << (2 * i)) * 4 // steps_div, 1]),
+                num_steps=np.max([num_steps, 1]),
             )
 
         if method_spec.uses_jac:
@@ -123,7 +125,11 @@ plt.savefig("figures/radau_course_run.svg")
 def darken_cmap(cmap: mpl.colors.Colormap) -> mpl.colors.Colormap:
     colors = cmap(np.linspace(0.0, 1.0, 13))
     colors_JCh = cspace_convert(colors[:, :3], "sRGB1", "JCh")
-    new_colors = np.clip(cspace_convert(colors_JCh * np.array([0.75, 1.0, 1.0]), "JCh", "sRGB1"), 0.0, 1.0)
+    new_colors = np.clip(
+        cspace_convert(colors_JCh * np.array([0.75, 1.0, 1.0]), "JCh", "sRGB1"),
+        0.0,
+        1.0,
+    )
     colors = np.column_stack([new_colors, colors[:, 3:]])
     return mpl.colors.ListedColormap(colors)
 
