@@ -1,7 +1,10 @@
+print("Initializing.", end="")
+
 from . import *
 
 from collections import namedtuple
 import colorsys
+import os.path
 import warnings
 import numpy as np
 from numpy.random import default_rng
@@ -11,12 +14,26 @@ from matplotlib import pyplot as plt
 from mpl_toolkits import mplot3d
 from cycler import cycler
 from colorspacious import cspace_convert
+from progress.bar import ShadyBar
+from progress.spinner import Spinner
+
+print(".", end="")
 
 plt.style.use("petroff8")
 mpl.rcParams["figure.dpi"] = 300
 mpl.rcParams["text.usetex"] = True
-# mpl.rcParams["savefig.transparent"] = True
+mpl.rcParams["savefig.transparent"] = True
 warnings.filterwarnings("ignore")
+
+output_folder = "figures"
+output_ext = ".svg"
+figure_files = []
+
+
+def record_figure(file):
+    plt.savefig(os.path.join(output_folder, file))
+    figure_files.append(file)
+
 
 np_orig_err_settings = np.seterr(all="ignore")
 
@@ -82,46 +99,6 @@ def get_kwargs_list(method_spec: MethodSpec) -> dict:
     ]
 
 
-error_analyses = {
-    method_spec.name: do_error_analysis(
-        method_spec.method,
-        get_kwargs_list(method_spec),
-        ivp_spec.pff_exact_sol_fn,
-        ivp_spec.pff_norm_fn,
-    )
-    for method_spec in method_specs
-}
-
-(
-    naive_rk11_error_analysis_result,
-    naive_rk23_error_analysis_result,
-    naive_rk45_error_analysis_result,
-    rk11_error_analysis_result,
-    rk23_error_analysis_result,
-    rk45_error_analysis_result,
-    dop853_error_analysis_result,
-    radau_error_analysis_result,
-    *_,
-) = error_analyses.values()
-
-jev_scale, lu_scale = measure_neff_scales(ivp_spec)
-
-make_sv_streamplot_fig()
-plt.savefig("figures/sv_streamplot.svg")
-
-make_polygon_fig(
-    ivp_spec,
-    naive_rk11_error_analysis_result.solns[0],
-)
-plt.savefig("figures/fixed_euler_course_run.svg")
-
-make_polygon_fig(
-    ivp_spec,
-    radau_error_analysis_result.solns[1],
-)
-plt.savefig("figures/radau_course_run.svg")
-
-
 def darken_cmap(cmap: mpl.colors.Colormap) -> mpl.colors.Colormap:
     colors = cmap(np.linspace(0.0, 1.0, 13))
     colors_JCh = cspace_convert(colors[:, :3], "sRGB1", "JCh")
@@ -134,33 +111,81 @@ def darken_cmap(cmap: mpl.colors.Colormap) -> mpl.colors.Colormap:
     return mpl.colors.ListedColormap(colors)
 
 
-make_error_analysis_fig(
-    ivp_spec, naive_rk11_error_analysis_result, darken_cmap(mpl.colormaps["YlOrBr"])
-)
-plt.savefig("figures/fixed_euler_err.svg")
+print(". done.")
+analysis_bar = ShadyBar("Doing analysis", max=len(method_specs) * runs_per_method)
 
-make_error_analysis_fig(
-    ivp_spec, rk11_error_analysis_result, darken_cmap(mpl.colormaps["PuBuGn"])
-)
-plt.savefig("figures/adapt_euler_err.svg")
+error_analyses = {
+    method_spec.name: do_error_analysis(
+        method_spec.method,
+        get_kwargs_list(method_spec),
+        ivp_spec.pff_exact_sol_fn,
+        ivp_spec.pff_norm_fn,
+        bar=analysis_bar,
+    )
+    for method_spec in method_specs
+}
 
-make_error_analysis_fig(
-    ivp_spec,
-    naive_rk23_error_analysis_result,
-    darken_cmap(mpl.colormaps["PuRd"]),
-)
-plt.savefig("figures/fixed_rk23_err.svg")
-make_error_analysis_fig(
-    ivp_spec,
-    rk23_error_analysis_result,
-    darken_cmap(mpl.colormaps["YlGnBu"]),
-)
-plt.savefig("figures/adapt_rk23_err.svg")
+analysis_bar.finish()
 
-make_error_analysis_fig(
-    ivp_spec, radau_error_analysis_result, darken_cmap(mpl.colormaps["YlOrRd"])
-)
-plt.savefig("figures/radau_err.svg")
+num_random_vecs = 1000
+neff_bar = ShadyBar("Measuring neff scales", max=num_random_vecs * 3)
+jev_scale, lu_scale = measure_neff_scales(ivp_spec, bar=neff_bar)
+neff_bar.finish()
+
+print(f"    jev_scale = {jev_scale}\n    lu_scale = {lu_scale}")
+
+graphs_bar = ShadyBar("Making graphs", max=(2 + 2 * len(method_specs)))
+
+make_sv_streamplot_fig()
+record_figure(f"sv_streamplot{output_ext}")
+graphs_bar.next()
+
+err_cmaps = [
+    darken_cmap(mpl.colormaps[cmap_name])
+    for cmap_name in [
+        "YlOrBr",
+        "PuBuGn",
+        "YlGnBu",
+        "PuRd",
+    ]
+]
+
+for i, (name, analysis) in enumerate(error_analyses.items()):
+    fname = "".join(map(str.lower, filter(str.isalnum, name)))
+
+    make_polygon_fig(
+        ivp_spec,
+        analysis.solns[np.argmax(analysis.global_errors)],
+    )
+    record_figure(f"{fname}_course_run{output_ext}")
+    graphs_bar.next()
+
+    make_error_analysis_fig(ivp_spec, analysis, err_cmaps[i % len(err_cmaps)])
+    record_figure(f"{fname}_err{output_ext}")
+    graphs_bar.next()
+
 
 make_work_precision_fig(error_analyses, jev_scale, lu_scale)
-plt.savefig("figures/work_precision.svg")
+record_figure(f"work_precision{output_ext}")
+graphs_bar.next()
+graphs_bar.finish()
+
+with open(os.path.join(output_folder, f"index.html"), "w") as file:
+    file.write(
+        f"""<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Figure Gallery</title>
+  </head>
+  <body>
+    <main>
+      <h1>Figure Gallery</h1>{''.join(f'''
+        <p><code>{file}</code><br><img src={file}></p>''' for file in figure_files)}
+    </main>
+  </body>
+</html>
+"""
+    )
+
+print(f"Figures saved in {output_folder}")

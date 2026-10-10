@@ -17,3 +17,5 @@ __pycache__/
 
 # figure outputs
 figures/*.svg
+figures/*.png
+figures/index.html

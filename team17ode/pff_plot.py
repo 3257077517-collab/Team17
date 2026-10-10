@@ -7,11 +7,17 @@ from .polar_factor_flow import pff_sv_fun, pff_sv_exact, PFFIVPSpec
 log_scale_kwargs = dict(base=10)
 
 
-def hack_off_autoscale(ax):
+def hack_off_autoscale(ax, x_clip=None, y_clip=None):
     # I want to do this but it seems buggy???
     # ax.set_autoscale_on(False)
-    ax.set_xlim(*ax.get_xlim())
-    ax.set_ylim(*ax.get_ylim())
+    xlim = ax.get_xlim()
+    ylim = ax.get_ylim()
+    if x_clip is not None:
+        xlim = np.clip(xlim, *x_clip)
+    if y_clip is not None:
+        ylim = np.clip(ylim, *y_clip)
+    ax.set_xlim(*xlim)
+    ax.set_ylim(*ylim)
 
 
 def plot_pff_sv_flow_lines(
@@ -145,7 +151,7 @@ def make_polygon_fig(ivp_spec, soln, **fig_kwargs) -> plt.Figure:
 
     plot_polygon_of_pff_soln_svs(ax, ivp_spec, soln)
 
-    hack_off_autoscale(ax)
+    hack_off_autoscale(ax, y_clip=(-2.5, 2.5))
     plot_pff_sv_flow_lines(ax, 16, color="C6", linewidth=0.125, zorder=-1)
 
     ax.axhline(-1.0, linewidth=0.5, linestyle="-.", color="C3")
@@ -247,7 +253,7 @@ def make_error_analysis_fig(
             label="$\\left\\Vert E_L \\right\\Vert$" if i == 0 else None,
         )
 
-    hack_off_autoscale(ax_eigen)
+    hack_off_autoscale(ax_eigen, y_clip=(-2.5, 2.5))
     plot_pff_sv_flow_lines(
         ax_eigen, 17, t_resolution=t_resolution, color="C6", linewidth=0.125, zorder=-1
     )
@@ -309,8 +315,7 @@ def make_work_precision_fig(
             label=name,
         )
 
-    ax.set_xlim(*np.clip(ax.get_xlim(), a_min=0.5 * np.finfo(float).eps, a_max=8.0))
-    ax.set_ylim(*ax.get_ylim())
+    hack_off_autoscale(ax, x_clip=(0.5 * np.finfo(float).eps, 8.0))
     ax.axvline(np.finfo(float).eps, zorder=-1, linestyle=":")
     ax.legend()
     return fig

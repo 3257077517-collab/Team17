@@ -19,7 +19,7 @@ ErrorAnalysisResult = namedtuple(
 )
 
 
-def do_error_analysis(method, solver_kwargs_list, exact_sol_fn, norm_fn):
+def do_error_analysis(method, solver_kwargs_list, exact_sol_fn, norm_fn, bar=None):
     num_times_to_solve = len(solver_kwargs_list)
     avg_step_sizes = np.empty(num_times_to_solve)
     global_errors = np.empty(num_times_to_solve)
@@ -63,6 +63,8 @@ def do_error_analysis(method, solver_kwargs_list, exact_sol_fn, norm_fn):
         step_size_seqs.append(step_size_seq)
         local_error_curves.append(local_error_curve)
         solns.append(soln)
+        if bar is not None:
+            bar.next()
 
     return ErrorAnalysisResult(
         solver_kwargs_list=solver_kwargs_list,

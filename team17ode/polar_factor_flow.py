@@ -105,17 +105,25 @@ def measure_neff_scales(
     rng=np.random.default_rng(0xE1E100),
     num_random_vecs=1000,
     num_timeit_reps=100,
+    bar=None,
 ):
     random_vecs = rng.uniform(
         -2.0, 2.0, size=num_random_vecs * ivp_spec.X0.shape[0] * ivp_spec.X0.shape[1]
     ).reshape((num_random_vecs, -1))
+
+    def measure_time(f):
+        time = timeit(f, number=num_timeit_reps)
+        if bar is not None:
+            bar.next()
+        return time
+
     fev_time = sum(
-        timeit(lambda: ivp_spec.pff_fun(0.0, vec), number=num_timeit_reps)
+        measure_time(lambda: ivp_spec.pff_fun(0.0, vec))
         for vec in random_vecs
     )
     jev_scale = (
         sum(
-            timeit(lambda: ivp_spec.pff_jac(0.0, vec), number=num_timeit_reps)
+            measure_time(lambda: ivp_spec.pff_jac(0.0, vec))
             for vec in random_vecs
         )
         / fev_time
@@ -123,7 +131,7 @@ def measure_neff_scales(
     random_jacs = [ivp_spec.pff_jac(0.0, vec) for vec in random_vecs]
     lu_scale = (
         sum(
-            timeit(lambda: spla.lu_factor(jac), number=num_timeit_reps)
+            measure_time(lambda: spla.lu_factor(jac))
             for jac in random_jacs
         )
         / fev_time
