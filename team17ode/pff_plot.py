@@ -204,7 +204,7 @@ def make_error_analysis_fig(
 
     ax_fevals.set_xlabel("$h$")
     ax_fevals.xaxis.set_label_position("top")
-    ax_fevals.set_ylabel("$n_{\\mathrm{fev}}$", labelpad=12, rotation=0)
+    ax_fevals.set_ylabel("$n_{\\mathrm{ev}}$", labelpad=12, rotation=0)
     ax_fevals.set_yscale("log", **log_scale_kwargs)
     ax_fevals.yaxis.set_label_position("right")
     ax_fevals.tick_params(labeltop=True, labelright=True)
@@ -253,17 +253,26 @@ def make_error_analysis_fig(
             label="$\\left\\Vert E_L \\right\\Vert$" if i == 0 else None,
         )
 
-    hack_off_autoscale(ax_eigen, y_clip=(-2.5, 2.5))
+    hack_off_autoscale(ax_eigen, y_clip=(-1.125, 2.5))
     plot_pff_sv_flow_lines(
         ax_eigen, 17, t_resolution=t_resolution, color="C6", linewidth=0.125, zorder=-1
     )
 
-    twin_errsum_lin.violinplot(
+    _, max_local_err = ax_lerror.get_ylim()
+    if max_local_err >= 8.0:
+        ax_lerror.set_ylim(top=8.0)
+
+    log2_avg_h = np.log2(result.avg_step_sizes)
+    violinparts = twin_errsum_lin.violinplot(
         [np.log2(curve[:-1]) for curve in result.local_error_curves],
-        np.log2(result.avg_step_sizes),
+        log2_avg_h,
+        widths=0.0625 * (np.max(log2_avg_h) - np.min(log2_avg_h)),
         linecolor=colors,
         facecolor=colors * np.array([1.0, 1.0, 1.0, 0.25]),
     )
+    for lc in violinparts.values():
+        if isinstance(lc, mpl.collections.LineCollection):
+            lc.set_linewidth(1.0)
     ax_errsum.set_xlim(tuple(np.exp2(bound) for bound in twin_errsum_lin.get_xlim()))
 
     ax_errsum.scatter(
@@ -280,13 +289,38 @@ def make_error_analysis_fig(
         c=colors,
         label="$\\left\\Vert E_G \\right\\Vert$",
     )
+    ax_errsum.legend()
+    twin_errsum_lin.set_ylim(*np.log2(np.array(ax_errsum.get_ylim())))
 
+    default_marker_size = mpl.rcParams["lines.markersize"] ** 2
     ax_fevals.scatter(
         result.avg_step_sizes,
         [soln.nfev for soln in result.solns],
+        s=0.5 * default_marker_size,
         marker="D",
         c=colors,
+        label="$n_{\\mathrm{fev}}$",
     )
+    if any(soln.njev > 0 for soln in result.solns):
+        ax_fevals.scatter(
+            result.avg_step_sizes,
+            [soln.njev for soln in result.solns],
+            s=default_marker_size,
+            marker="P",
+            c=colors,
+            label="$n_{\\mathrm{jev}}$",
+        )
+    if any(soln.nlu > 0 for soln in result.solns):
+        ax_fevals.scatter(
+            result.avg_step_sizes,
+            [soln.nlu for soln in result.solns],
+            s=0.5 * default_marker_size,
+            marker="s",
+            c=colors,
+            label="$n_{\\mathrm{lu}}$",
+        )
+
+    ax_fevals.legend()
 
     return fig
 

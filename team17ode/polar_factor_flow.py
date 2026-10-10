@@ -118,22 +118,14 @@ def measure_neff_scales(
         return time
 
     fev_time = sum(
-        measure_time(lambda: ivp_spec.pff_fun(0.0, vec))
-        for vec in random_vecs
+        measure_time(lambda: ivp_spec.pff_fun(0.0, vec)) for vec in random_vecs
     )
     jev_scale = (
-        sum(
-            measure_time(lambda: ivp_spec.pff_jac(0.0, vec))
-            for vec in random_vecs
-        )
+        sum(measure_time(lambda: ivp_spec.pff_jac(0.0, vec)) for vec in random_vecs)
         / fev_time
     )
     random_jacs = [ivp_spec.pff_jac(0.0, vec) for vec in random_vecs]
     lu_scale = (
-        sum(
-            measure_time(lambda: spla.lu_factor(jac))
-            for jac in random_jacs
-        )
-        / fev_time
+        sum(measure_time(lambda: spla.lu_factor(jac)) for jac in random_jacs) / fev_time
     )
     return jev_scale, lu_scale
