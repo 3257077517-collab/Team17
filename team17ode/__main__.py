@@ -10,11 +10,12 @@ import matplotlib as mpl
 from matplotlib import pyplot as plt
 from mpl_toolkits import mplot3d
 from cycler import cycler
+from colorspacious import cspace_convert
 
 plt.style.use("petroff8")
 mpl.rcParams["figure.dpi"] = 300
 mpl.rcParams["text.usetex"] = True
-mpl.rcParams["savefig.transparent"] = True
+# mpl.rcParams["savefig.transparent"] = True
 warnings.filterwarnings("ignore")
 
 np_orig_err_settings = np.seterr(all="ignore")
@@ -40,6 +41,7 @@ method_specs = [
     MethodSpec("as RK1(1)", RK11, order=1, adaptive=True, uses_jac=False),
     MethodSpec("as RK3(2)", itg.RK23, order=3, adaptive=True, uses_jac=False),
     MethodSpec("as RK5(4)", itg.RK45, order=5, adaptive=True, uses_jac=False),
+    MethodSpec("DOP853", itg.DOP853, order=8, adaptive=True, uses_jac=False),
     MethodSpec("Radau IIA", itg.Radau, order=5, adaptive=True, uses_jac=True),
     MethodSpec("BDF", itg.BDF, order=5, adaptive=True, uses_jac=True),
     MethodSpec("Adams/BDF", itg.LSODA, order=5, adaptive=True, uses_jac=True),
@@ -58,7 +60,7 @@ def get_kwargs_list(method_spec: MethodSpec) -> dict:
         else:
             steps_div = np.max([method_spec.order - 1, 1])
             extra_kwargs = dict(
-                num_steps=(1 << (2 * i)) * 4 // steps_div,
+                num_steps=np.max([(1 << (2 * i)) * 4 // steps_div, 1]),
             )
 
         if method_spec.uses_jac:
@@ -71,6 +73,7 @@ def get_kwargs_list(method_spec: MethodSpec) -> dict:
             fun=ivp_spec.pff_fun,
             t_span=t_bounds,
             y0=np.ravel(ivp_spec.X0),
+            dense_output=True,
             **get_extra_kwargs(i),
         )
         for i in range(runs_per_method)
@@ -94,6 +97,7 @@ error_analyses = {
     rk11_error_analysis_result,
     rk23_error_analysis_result,
     rk45_error_analysis_result,
+    dop853_error_analysis_result,
     radau_error_analysis_result,
     *_,
 ) = error_analyses.values()
@@ -116,28 +120,40 @@ make_polygon_fig(
 plt.savefig("figures/radau_course_run.svg")
 
 
+def darken_cmap(cmap: mpl.colors.Colormap) -> mpl.colors.Colormap:
+    colors = cmap(np.linspace(0.0, 1.0, 13))
+    colors_JCh = cspace_convert(colors[:, :3], "sRGB1", "JCh")
+    new_colors = np.clip(cspace_convert(colors_JCh * np.array([0.75, 1.0, 1.0]), "JCh", "sRGB1"), 0.0, 1.0)
+    colors = np.column_stack([new_colors, colors[:, 3:]])
+    return mpl.colors.ListedColormap(colors)
+
+
 make_error_analysis_fig(
-    ivp_spec, naive_rk11_error_analysis_result, mpl.colormaps["summer"]
+    ivp_spec, naive_rk11_error_analysis_result, darken_cmap(mpl.colormaps["YlOrBr"])
 )
 plt.savefig("figures/fixed_euler_err.svg")
 
-make_error_analysis_fig(ivp_spec, rk11_error_analysis_result, mpl.colormaps["autumn"])
+make_error_analysis_fig(
+    ivp_spec, rk11_error_analysis_result, darken_cmap(mpl.colormaps["PuBuGn"])
+)
 plt.savefig("figures/adapt_euler_err.svg")
 
 make_error_analysis_fig(
     ivp_spec,
     naive_rk23_error_analysis_result,
-    mpl.colormaps["winter"],
+    darken_cmap(mpl.colormaps["PuRd"]),
 )
 plt.savefig("figures/fixed_rk23_err.svg")
 make_error_analysis_fig(
     ivp_spec,
     rk23_error_analysis_result,
-    mpl.colormaps["spring"],
+    darken_cmap(mpl.colormaps["YlGnBu"]),
 )
 plt.savefig("figures/adapt_rk23_err.svg")
 
-make_error_analysis_fig(ivp_spec, radau_error_analysis_result, mpl.colormaps["cool"])
+make_error_analysis_fig(
+    ivp_spec, radau_error_analysis_result, darken_cmap(mpl.colormaps["YlOrRd"])
+)
 plt.savefig("figures/radau_err.svg")
 
 make_work_precision_fig(error_analyses, jev_scale, lu_scale)

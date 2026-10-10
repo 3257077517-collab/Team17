@@ -14,7 +14,9 @@ def hack_off_autoscale(ax):
     ax.set_ylim(*ax.get_ylim())
 
 
-def plot_pff_sv_flow_lines(ax: plt.Axes, num_lines, t_resolution=129, t_left=None, t_right=None, **plot_kwargs):
+def plot_pff_sv_flow_lines(
+    ax: plt.Axes, num_lines, t_resolution=129, t_left=None, t_right=None, **plot_kwargs
+):
     if t_left is None or t_right is None:
         t_left, t_right = ax.get_xlim()
 
@@ -59,20 +61,32 @@ def plot_polygon_of_pff_soln_svs(
     exact_args_getter=lambda i: dict(color=f"C{i}", linestyle=":", linewidth=1.0),
     exact_t_resolution=129,
 ):
+    t_left = soln.t[0]
+    t_right = soln.t[-1]
+    ts = np.linspace(t_left, t_right, exact_t_resolution)
 
-    soln_svss = np.diagonal(
-        spec.U.T @ soln.y.T.reshape((soln.y.shape[1], *spec.X0.shape)) @ spec.V,
-        axis1=1,
-        axis2=2,
-    ).T
+    if soln.t.shape[0] <= exact_t_resolution:
+        soln_svss = np.diagonal(
+            spec.U.T @ soln.y.T.reshape((soln.y.shape[1], *spec.X0.shape)) @ spec.V,
+            axis1=1,
+            axis2=2,
+        ).T
 
-    for i, soln_svs in enumerate(soln_svss):
-        ax.plot(soln.t, soln_svs, **plot_args_getter(i))
+        for i, soln_svs in enumerate(soln_svss):
+            ax.plot(soln.t, soln_svs, **plot_args_getter(i))
+    else:
+        soln_svss = np.diagonal(
+            spec.U.T
+            @ soln.sol(ts).T.reshape((exact_t_resolution, *spec.X0.shape))
+            @ spec.V,
+            axis1=1,
+            axis2=2,
+        ).T
+
+        for i, soln_svs in enumerate(soln_svss):
+            ax.plot(ts, soln_svs, **plot_args_getter(i))
 
     if should_plot_exact:
-        t_left = soln.t[0]
-        t_right = soln.t[-1]
-        ts = np.linspace(t_left, t_right, exact_t_resolution)
         for i, soln_svs in enumerate(soln_svss):
             ax.plot(ts, pff_sv_exact(ts, soln_svs[0]), **exact_args_getter(i))
 
@@ -90,7 +104,9 @@ def make_sv_streamplot_fig() -> plt.Figure:
     ax_flow.set_ylabel("$\\pm\\sigma_i$", labelpad=12, rotation=0)
     ax_flow.set_ylim(-2.0, 2.0)
     ax_flow.set_aspect("equal", adjustable="datalim")
-    plot_pff_sv_flow_lines(ax_flow, 16, t_left=0.0, t_right=3.5, linewidth=0.5, color="C1", zorder=-1)
+    plot_pff_sv_flow_lines(
+        ax_flow, 16, t_left=0.0, t_right=3.5, linewidth=0.5, color="C1", zorder=-1
+    )
 
     ax_flow.axhline(-1.0, linewidth=1.0, color="C0")
     ax_flow.axhline(0.0, linewidth=1.0, color="C0")
@@ -130,7 +146,7 @@ def make_polygon_fig(ivp_spec, soln, **fig_kwargs) -> plt.Figure:
     plot_polygon_of_pff_soln_svs(ax, ivp_spec, soln)
 
     hack_off_autoscale(ax)
-    plot_pff_sv_flow_lines(ax, 16, linewidth=0.125, zorder=-1)
+    plot_pff_sv_flow_lines(ax, 16, color="C6", linewidth=0.125, zorder=-1)
 
     ax.axhline(-1.0, linewidth=0.5, linestyle="-.", color="C3")
     ax.axhline(0.0, linewidth=0.5, linestyle="-.", color="C3")
@@ -143,6 +159,7 @@ def make_error_analysis_fig(
     ivp_spec: PFFIVPSpec,
     result,
     cmap,
+    t_resolution=129,
     figkwargs=dict(figsize=7.2 * np.array([16.0 / 9.0, 1.0])),
 ) -> plt.Figure:
     fig: plt.Figure = plt.figure(**figkwargs)
@@ -194,7 +211,7 @@ def make_error_analysis_fig(
         labelleft=False,
     )
 
-    ts = np.linspace(*result.solver_kwargs_list[0]["t_span"], 129)
+    ts = np.linspace(*result.solver_kwargs_list[0]["t_span"], t_resolution)
 
     num_solns = len(result.solns)
     colors = np.array(
@@ -219,6 +236,7 @@ def make_error_analysis_fig(
                 zorder=-i,
             ),
             should_plot_exact=False,
+            exact_t_resolution=t_resolution,
         )
 
         ax_lerror.step(
@@ -230,7 +248,9 @@ def make_error_analysis_fig(
         )
 
     hack_off_autoscale(ax_eigen)
-    plot_pff_sv_flow_lines(ax_eigen, 17, color='C6', linewidth=0.125, zorder=-1)
+    plot_pff_sv_flow_lines(
+        ax_eigen, 17, t_resolution=t_resolution, color="C6", linewidth=0.125, zorder=-1
+    )
 
     twin_errsum_lin.violinplot(
         [np.log2(curve[:-1]) for curve in result.local_error_curves],
@@ -266,7 +286,7 @@ def make_error_analysis_fig(
 
 
 def make_work_precision_fig(
-    error_analyses: dict, jev_scale: float, lu_scale: float
+    error_analyses: dict, jev_scale: float, lu_scale: float, markerset="xxxoooo+++"
 ) -> plt.Figure:
     fig, ax = plt.subplots()
     ax.set_xlabel("$\\left\\Vert E_G \\right\\Vert$")
@@ -283,13 +303,13 @@ def make_work_precision_fig(
         ax.plot(
             result.global_errors,
             work,
-            f"--{['x', 'o', '+'][(i // 3) % 3]}",
+            f"--{markerset[i % len(markerset)]}",
             linewidth=0.75,
             fillstyle="none",
             label=name,
         )
 
-    ax.set_xlim(*ax.get_xlim())
+    ax.set_xlim(*np.clip(ax.get_xlim(), a_min=0.5 * np.finfo(float).eps, a_max=8.0))
     ax.set_ylim(*ax.get_ylim())
     ax.axvline(np.finfo(float).eps, zorder=-1, linestyle=":")
     ax.legend()
