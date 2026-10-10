@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.integrate as itg
 from scipy.integrate._ivp.rk import RungeKutta, rk_step
+from .imp_euler import ImplicitEuler
 
 
 class RK21(RungeKutta):
@@ -12,6 +13,7 @@ class RK21(RungeKutta):
     B = np.array([1.0])
     E = np.array([-0.5, 0.5])
     P = np.array([[1.0, 1, -1], [0, -1, 1]])
+
 
 
 class FixedRungeKutta(RungeKutta):
