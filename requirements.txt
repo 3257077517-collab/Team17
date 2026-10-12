@@ -1,4 +1,6 @@
+progress
 numpy
 scipy
 matplotlib
+colorspacious
 jupyterlab
