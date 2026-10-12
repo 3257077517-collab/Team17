@@ -26,7 +26,7 @@ mpl.rcParams["savefig.transparent"] = True
 warnings.filterwarnings("ignore")
 
 output_folder = "figures"
-output_ext = ".svg"
+output_ext = ".png"
 figure_files = []
 
 
