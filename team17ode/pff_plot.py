@@ -326,9 +326,10 @@ def make_error_analysis_fig(
 
 
 def make_work_precision_fig(
-    error_analyses: dict, jev_scale: float, lu_scale: float, markerset="xxxxoooo+++"
+    error_analyses: dict, jev_scale: float, lu_scale: float, markerset="xxxxoooo++++", **fig_kwargs
 ) -> plt.Figure:
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(**fig_kwargs)
+    
     ax.set_xlabel("$\\left\\Vert E_G \\right\\Vert$")
     ax.set_xscale("log", **log_scale_kwargs)
     ax.set_xinverted(True)

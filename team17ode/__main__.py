@@ -48,21 +48,107 @@ MethodSpec = namedtuple(
         "order",
         "adaptive",
         "uses_jac",
+        "extra_kwargs_getter",
     ],
 )
 
 method_specs = [
-    MethodSpec("fs RK1", FixedRK1, order=1, adaptive=False, uses_jac=False),
-    MethodSpec("fs RK3", FixedRK3, order=3, adaptive=False, uses_jac=False),
-    MethodSpec("fs RK5", FixedRK5, order=5, adaptive=False, uses_jac=False),
-    MethodSpec("fs RK8", FixedRK8, order=8, adaptive=False, uses_jac=False),
-    MethodSpec("as RK1(2)", RK21, order=1, adaptive=True, uses_jac=False),
-    MethodSpec("as RK3(2)", itg.RK23, order=3, adaptive=True, uses_jac=False),
-    MethodSpec("as RK5(4)", itg.RK45, order=5, adaptive=True, uses_jac=False),
-    MethodSpec("as DOP853", itg.DOP853, order=8, adaptive=True, uses_jac=False),
-    MethodSpec("Radau IIA", itg.Radau, order=5, adaptive=True, uses_jac=True),
-    MethodSpec("BDF", itg.BDF, order=5, adaptive=True, uses_jac=True),
-    MethodSpec("Adams/BDF", itg.LSODA, order=5, adaptive=True, uses_jac=True),
+    MethodSpec(
+        "fs Euler",
+        FixedRK1,
+        order=1,
+        adaptive=False,
+        uses_jac=False,
+        extra_kwargs_getter=lambda i: dict(num_steps=int(np.exp2(2.0 * i + 2.0))),
+    ),
+    MethodSpec(
+        "fs RK3",
+        FixedRK3,
+        order=3,
+        adaptive=False,
+        uses_jac=False,
+        extra_kwargs_getter=lambda i: dict(num_steps=int(np.exp2(1.75 * i + 1.5))),
+    ),
+    MethodSpec(
+        "fs RK5",
+        FixedRK5,
+        order=5,
+        adaptive=False,
+        uses_jac=False,
+        extra_kwargs_getter=lambda i: dict(num_steps=int(np.exp2(1.5 * i + 2.0))),
+    ),
+    MethodSpec(
+        "fs RK8",
+        FixedRK8,
+        order=8,
+        adaptive=False,
+        uses_jac=False,
+        extra_kwargs_getter=lambda i: dict(num_steps=int(np.exp2(i + 1.0))),
+    ),
+    MethodSpec(
+        "as RK1(2)",
+        RK21,
+        order=1,
+        adaptive=True,
+        uses_jac=False,
+        extra_kwargs_getter=lambda i: dict(rtol=np.exp2(-4.0 * i - 1.0)),
+    ),
+    MethodSpec(
+        "as RK3(2)",
+        itg.RK23,
+        order=3,
+        adaptive=True,
+        uses_jac=False,
+        extra_kwargs_getter=lambda i: dict(rtol=np.exp2(-6.0 * i - 1.0)),
+    ),
+    MethodSpec(
+        "as RK5(4)",
+        itg.RK45,
+        order=5,
+        adaptive=True,
+        uses_jac=False,
+        extra_kwargs_getter=lambda i: dict(rtol=np.exp2(-8.0 * i - 1.0)),
+    ),
+    MethodSpec(
+        "as DOP853",
+        itg.DOP853,
+        order=8,
+        adaptive=True,
+        uses_jac=False,
+        extra_kwargs_getter=lambda i: dict(rtol=np.exp2(-8.0 * i)),
+    ),
+    MethodSpec(
+        "impl Euler",
+        ImplicitEuler,
+        order=1,
+        adaptive=True,
+        uses_jac=True,
+        extra_kwargs_getter=lambda i: dict(rtol=np.exp2(-1.25 * i)),
+    ),
+    MethodSpec(
+        "Radau IIA",
+        itg.Radau,
+        order=5,
+        adaptive=True,
+        uses_jac=True,
+        extra_kwargs_getter=lambda i: dict(rtol=np.exp2(-6.0 * i - 1.0)),
+    ),
+    MethodSpec(
+        "BDF",
+        itg.BDF,
+        order=5,
+        adaptive=True,
+        uses_jac=True,
+        extra_kwargs_getter=lambda i: dict(rtol=np.exp2(-9.0 * i)),
+    ),
+    MethodSpec(
+        "Adams/BDF",
+        itg.LSODA,
+        order=5,
+        adaptive=True,
+        uses_jac=True,
+        extra_kwargs_getter=lambda i: dict(rtol=np.exp2(-9.0 * i)),
+    ),
 ]
 
 runs_per_method = 6
@@ -70,17 +156,10 @@ runs_per_method = 6
 
 def get_kwargs_list(method_spec: MethodSpec) -> dict:
     def get_extra_kwargs(i):
+        extra_kwargs = method_spec.extra_kwargs_getter(i)
+
         if method_spec.adaptive:
-            extra_kwargs = dict(
-                rtol=np.exp2(-4 * i - 2),
-                atol=np.exp2(-8 * i - 4),
-            )
-        else:
-            steps_div = np.max([method_spec.order - 1, 1])
-            num_steps = int(np.exp2(2 * i / method_spec.order) * 4)
-            extra_kwargs = dict(
-                num_steps=np.max([num_steps, 1]),
-            )
+            extra_kwargs.update(atol=np.square(extra_kwargs["rtol"]))
 
         if method_spec.uses_jac:
             extra_kwargs.update(jac=ivp_spec.pff_jac)
@@ -165,7 +244,7 @@ for i, (name, analysis) in enumerate(error_analyses.items()):
     graphs_bar.next()
 
 
-make_work_precision_fig(error_analyses, jev_scale, lu_scale)
+make_work_precision_fig(error_analyses, jev_scale, lu_scale, figsize=(6.4, 6.4))
 record_figure(f"work_precision{output_ext}")
 graphs_bar.next()
 graphs_bar.finish()

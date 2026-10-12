@@ -1,3 +1,9 @@
+# quickly adapted from scipy's Radau IIA order 5 integrator
+# definitely not optimal or configurable or anything
+# lots of extra processing silliness
+# still, should count things correctly regardless
+# implicit euler truly is very inefficient
+
 import numpy as np
 from scipy.linalg import lu_factor, lu_solve
 from scipy.sparse import issparse, eye_array, safely_cast_index_arrays
